@@ -1,0 +1,117 @@
+public class HashTableWithLinearProbing implements OurHashMap<Integer, Student> {
+
+    private Student[] hashTable;
+    private int tableSize;
+    private int totalEntries;
+    private int totalCollisions;
+
+    public HashTableWithLinearProbing() {
+        this(10);
+    }
+
+    public HashTableWithLinearProbing(int size) {
+        this.tableSize = size;
+        this.hashTable = new Student[tableSize];
+        this.totalEntries = 0;
+        this.totalCollisions = 0;
+    }
+
+    @Override
+    public Integer getHashCode(Student s) {
+        return HashCodeGenerator.generateHashCode(s.getSID());
+    }
+
+    @Override
+    public int hashFunction(Integer key) {
+        return key % tableSize;
+    }
+
+    @Override
+    public boolean insert(Integer key, Student data) {
+        if (totalEntries == tableSize) {
+            return false; // table full
+        }
+        int index = hashFunction(key);
+        int originalIndex = index;
+        boolean collisionOccurred = false;
+
+        while (hashTable[index] != null) {
+            if (hashTable[index].getSID().equals(data.getSID())) {
+                return false; // duplicate key
+            }
+            collisionOccurred = true;
+            index = (index + 1) % tableSize;
+            if (index == originalIndex) {
+                return false; // full loop, no space
+            }
+        }
+        if (collisionOccurred) totalCollisions++;
+        hashTable[index] = data;
+        totalEntries++;
+        return true;
+    }
+
+    @Override
+    public Student lookup(Integer key) {
+        int index = hashFunction(key);
+        int originalIndex = index;
+
+        while (hashTable[index] != null) {
+            if (getHashCode(hashTable[index]).equals(key)) {
+                return hashTable[index];
+            }
+            index = (index + 1) % tableSize;
+            if (index == originalIndex) break;
+        }
+        return null; // not found
+    }
+
+    @Override
+    public boolean delete(Integer key) {
+        int index = hashFunction(key);
+        int originalIndex = index;
+
+        while (hashTable[index] != null) {
+            if (getHashCode(hashTable[index]).equals(key)) {
+                hashTable[index] = null;
+                totalEntries--;
+
+                // Rehash subsequent entries
+                index = (index + 1) % tableSize;
+                while (hashTable[index] != null) {
+                    Student temp = hashTable[index];
+                    hashTable[index] = null;
+                    totalEntries--;
+                    insert(getHashCode(temp), temp);
+                    index = (index + 1) % tableSize;
+                }
+                return true;
+            }
+            index = (index + 1) % tableSize;
+            if (index == originalIndex) break;
+        }
+        return false; // not found
+    }
+
+    @Override
+    public void printHashMap() {
+        System.out.println("*** Printing HashTable with Linear Probing ***");
+        for (int i = 0; i < tableSize; i++) {
+            if (hashTable[i] == null) {
+                System.out.println(i + " >> ---");
+            } else {
+                Student s = hashTable[i];
+                System.out.println(i + " >> " + s.getName() + " | ID: " + s.getSID() + " | GPA: " + s.getgpa());
+            }
+        }
+        System.out.println("Total entries: " + totalEntries);
+        System.out.println("Total collisions so far: " + totalCollisions);
+    }
+
+    // New method to count collisions
+    public int countCollision() {
+        return totalCollisions;
+    }
+}
+
+
